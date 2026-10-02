@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI Resume Analyzer</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #eef2ff;
+            color: #1f2937;
+        }
+
+        .container {
+            width: 92%;
+            max-width: 900px;
+            margin: 40px auto;
+            background: white;
+            padding: 35px;
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 8px;
+            color: #1e3a8a;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 30px;
+        }
+
+        .input-section {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        input[type="file"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        textarea {
+            min-height: 180px;
+            resize: vertical;
+        }
+
+        input[type="file"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .analyze-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            background: #2563eb;
+            color: white;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .analyze-btn:hover {
+            background: #1d4ed8;
+        }
+
+        #status {
+            text-align: center;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        #results {
+            margin-top: 35px;
+        }
+
+        .result-title {
+            text-align: center;
+            color: #1e3a8a;
+            margin-bottom: 25px;
+        }
+
+        .score-circle {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    margin: 0 auto 15px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background:
+        conic-gradient(
+            #2563eb var(--score),
+            #dbeafe var(--score)
+        );
+
+    position: relative;
+}
+
+.score-circle::before {
+    content: "";
+    position: absolute;
+    width: 125px;
+    height: 125px;
+    background: #eff6ff;
+    border-radius: 50%;
+}
+
+.score-circle .score {
+    position: relative;
+    z-index: 1;
+    font-size: 32px;
+}
+
+        .cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            padding: 20px;
+            border-radius: 12px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+        }
+
+        .card h3 {
+            margin-top: 0;
+        }
+
+        .skill-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .skill {
+            padding: 7px 12px;
+            border-radius: 20px;
+            background: #dbeafe;
+            color: #1e40af;
+            font-size: 14px;
+        }
+
+        .missing {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .strength {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        .restart-btn {
+            width: 100%;
+            margin-top: 25px;
+            padding: 13px;
+            border: none;
+            border-radius: 8px;
+            background: #16a34a;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .restart-btn:hover {
+            background: #15803d;
+        }
+
+        @media (max-width: 700px) {
+
+            .container {
+                padding: 20px;
+                margin: 20px auto;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            .score {
+                font-size: 40px;
+            }
+        }
+
+        .resume-info {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+}
+
+.resume-info p {
+    margin: 5px 0;
+}
+
+.download-btn {
+    width: 100%;
+    margin-top: 12px;
+    padding: 13px;
+    border: none;
+    border-radius: 8px;
+    background: #7c3aed;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.download-btn:hover {
+    background: #6d28d9;
+}
+
+.role-card {
+    background: #f5f3ff;
+    border: 1px solid #ddd6fe;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.role-card h3 {
+    margin-top: 0;
+    color: #5b21b6;
+}
+
+.recommended-role {
+    font-size: 24px;
+    font-weight: bold;
+    color: #6d28d9;
+}
+
+
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>AI Resume Analyzer</h1>
+
+    <p class="subtitle">
+        Analyze your resume and compare it with a job description.
+    </p>
+
+    <div class="input-section">
+
+        <label for="resume">
+            Upload Resume (PDF)
+        </label>
+
+        <input
+            type="file"
+            id="resume"
+            accept=".pdf"
+        >
+
+    </div>
+
+    <div class="input-section">
+
+        <label for="jobDescription">
+            Job Description
+        </label>
+
+        <textarea
+            id="jobDescription"
+            placeholder="Paste the job description here..."
+        ></textarea>
+
+    </div>
+
+    <button
+        class="analyze-btn"
+        onclick="analyzeResume()"
+    >
+        Analyze Resume
+    </button>
+
+    <div id="status"></div>
+
+    <div id="results"></div>
+
+</div>
+
+
+<script>
+
+async function analyzeResume() {
+
+    const resumeFile =
+        document.getElementById("resume").files[0];
+
+    const jobDescription =
+        document.getElementById("jobDescription").value;
+
+    const status =
+        document.getElementById("status");
+
+    const results =
+        document.getElementById("results");
+
+
+    results.innerHTML = "";
+
+
+    if (!resumeFile) {
+
+        status.innerHTML =
+            "Please upload a resume PDF.";
+
+        return;
+    }
+
+
+    if (!jobDescription.trim()) {
+
+        status.innerHTML =
+            "Please enter a job description.";
+
+        return;
+    }
+
+
+    status.innerHTML =
+        "Analyzing resume... Please wait.";
+
+
+    const formData = new FormData();
+
+    formData.append(
+        "resume",
+        resumeFile
+    );
+
+    formData.append(
+        "job_description",
+        jobDescription
+    );
+
+
+    try {
+
+        const response = await fetch(
+            "/analyze",
+            {
+                method: "POST",
+                body: formData
+            }
+        );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            status.innerHTML =
+                data.error ||
+                "Something went wrong.";
+
+            return;
+        }
+
+
+        status.innerHTML =
+            "Analysis completed successfully.";
+
+
+        const detectedSkills =
+            data.detected_skills || [];
+
+        const matchingSkills =
+            data.matching_skills || [];
+
+        const missingSkills =
+            data.missing_skills || [];
+
+        const strengths =
+            data.strengths || [];
+
+        const suggestions =
+            data.suggestions || [];
+
+
+        results.innerHTML = `
+
+            <h2 class="result-title">
+                Resume Analysis Results
+            </h2>
+
+            <div class="resume-info">
+
+    <p>
+        📄 <strong>Resume:</strong>
+        ${data.filename}
+    </p>
+
+    <p>
+        📑 <strong>Pages:</strong>
+        ${data.page_count}
+    </p>
+
+</div>
+
+<div class="role-card">
+
+    <h3>🎯 Recommended Job Role</h3>
+
+    <div class="recommended-role">
+        ${data.recommended_role}
+    </div>
+
+</div>
+
+
+<div class="score-card">
+
+    <div class="score-circle"
+         style="--score: ${data.match_percentage}%">
+
+        <div class="score">
+            ${data.match_percentage}%
+        </div>
+
+    </div>
+
+    <div class="score-label">
+        Resume Match with Job Description
+    </div>
+
+</div>
+            
+    
+
+
+            <div class="cards">
+
+
+                <div class="card">
+
+                    <h3>
+                        🔎 Detected Skills
+                    </h3>
+
+                    <div class="skill-list">
+
+                        ${
+                            detectedSkills.length
+                            ?
+                            detectedSkills.map(
+                                skill =>
+                                `<span class="skill">
+                                    ${skill}
+                                </span>`
+                            ).join("")
+                            :
+                            "<p>No skills detected.</p>"
+                        }
+
+                    </div>
+
+                </div>
+
+
+                <div class="card">
+
+                    <h3>
+                        ✅ Matching Skills
+                    </h3>
+
+                    <div class="skill-list">
+
+                        ${
+                            matchingSkills.length
+                            ?
+                            matchingSkills.map(
+                                skill =>
+                                `<span class="skill strength">
+                                    ${skill}
+                                </span>`
+                            ).join("")
+                            :
+                            "<p>No matching skills found.</p>"
+                        }
+
+                    </div>
+
+                </div>
+
+
+                <div class="card">
+
+                    <h3>
+                        ❌ Missing Skills
+                    </h3>
+
+                    <div class="skill-list">
+
+                        ${
+                            missingSkills.length
+                            ?
+                            missingSkills.map(
+                                skill =>
+                                `<span class="skill missing">
+                                    ${skill}
+                                </span>`
+                            ).join("")
+                            :
+                            "<p>No major missing skills detected.</p>"
+                        }
+
+                    </div>
+
+                </div>
+
+
+                <div class="card">
+
+                    <h3>
+                        💪 Resume Strengths
+                    </h3>
+
+                    <ul>
+
+                        ${
+                            strengths.map(
+                                item =>
+                                `<li>${item}</li>`
+                            ).join("")
+                        }
+
+                    </ul>
+
+                </div>
+
+
+                <div class="card">
+
+                    <h3>
+                        💡 Suggestions for Improvement
+                    </h3>
+
+                    <ul>
+
+                        ${
+                            suggestions.map(
+                                item =>
+                                `<li>${item}</li>`
+                            ).join("")
+                        }
+
+                    </ul>
+
+                </div>
+
+
+            </div>
+
+
+            <button
+                class="restart-btn"
+                onclick="resetAnalyzer()"
+            >
+                🔄 Analyze Another Resume
+            </button>
+
+            <button
+    class="download-btn"
+    onclick="downloadReport()"
+>
+    📥 Download Analysis Report
+</button>
+
+        `;
+
+    }
+
+    catch (error) {
+
+        status.innerHTML =
+            "Unable to connect to the server.";
+
+        console.error(error);
+    }
+}
+
+
+function resetAnalyzer() {
+
+    document.getElementById("resume").value = "";
+
+    document.getElementById("jobDescription").value = "";
+
+    document.getElementById("status").innerHTML = "";
+
+    document.getElementById("results").innerHTML = "";
+
+}
+
+function downloadReport() {
+
+    const results = document.getElementById("results");
+
+    if (!results.innerText.trim()) {
+        alert("Please analyze a resume first.");
+        return;
+    }
+
+    const report = `
+AI RESUME ANALYZER
+===========================
+
+${results.innerText}
+
+===========================
+Generated by AI Resume Analyzer
+`;
+
+    const blob = new Blob(
+        [report],
+        { type: "text/plain" }
+    );
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "resume-analysis-report.txt";
+
+    link.click();
+
+    URL.revokeObjectURL(url);
+}
+
+</script>
+
+</body>
+</html>
