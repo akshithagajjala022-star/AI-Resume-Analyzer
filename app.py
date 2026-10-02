@@ -12,6 +12,10 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def generate_ai_analysis(resume_text, job_description):
     try:
+        from google import genai
+
+        client = genai.Client()
+
         prompt = f"""
 You are an expert resume reviewer.
 
@@ -35,25 +39,15 @@ Base the analysis only on the information provided.
 Do not invent qualifications or experience.
 """
 
-        response = requests.post(
-            "http://127.0.0.1:11434/api/generate",
-            json={
-                "model": "llama3.2",
-                "prompt": prompt,
-                "stream": False
-            },
-            timeout=120
+        response = client.interactions.create(
+            model="gemini-3.8-flash",
+            input=prompt
         )
 
-        response.raise_for_status()
-
-        data = response.json()
-
-        return data.get("response", "").strip()
+        return response.output_text.strip()
 
     except Exception as e:
         return f"AI analysis could not be generated: {str(e)}"
-
 
 @app.route("/")
 def home():
