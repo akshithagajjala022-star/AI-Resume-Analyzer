@@ -2,6 +2,9 @@ from flask import Flask, render_template, request, jsonify
 from PyPDF2 import PdfReader
 import os
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -14,7 +17,7 @@ def generate_ai_analysis(resume_text, job_description):
     try:
         from google import genai
 
-        client = genai.Client()
+        client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
         prompt = f"""
 You are an expert resume reviewer.
@@ -319,6 +322,11 @@ def analyze_resume():
                 "Continue improving your resume with measurable achievements."
             )
 
+        ai_analysis = generate_ai_analysis(
+          resume_text,
+          job_description
+        ) 
+
         return jsonify({
             "filename": resume.filename,
             "page_count": page_count,
@@ -328,7 +336,8 @@ def analyze_resume():
             "matching_skills": matching_skills,
             "missing_skills": missing_skills,
             "strengths": strengths,
-            "suggestions": suggestions
+            "suggestions": suggestions,
+            "ai_analysis": ai_analysis
         })
 
     except Exception as e:
