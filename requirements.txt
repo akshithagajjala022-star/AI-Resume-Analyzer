@@ -2,4 +2,4 @@ Flask
 PyPDF2
 requests
 gunicorn
-google-grnai
+google-grnai==2.25.0
