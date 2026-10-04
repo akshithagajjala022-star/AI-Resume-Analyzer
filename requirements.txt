@@ -3,3 +3,4 @@ PyPDF2
 requests
 gunicorn
 google-genai==2.23.0
+python-dotenv
