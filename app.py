@@ -15,9 +15,14 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def generate_ai_analysis(resume_text, job_description):
     try:
-        from google import genai
+        api_key = os.getenv("GEMINI_API_KEY")
 
-        client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+        if not api_key:
+            return "AI analysis unavailable: GEMINI_API_KEY is not configured."
+
+        # Keep the request small and stable for Render
+        resume_text = resume_text[:12000]
+        job_description = job_description[:5000]
 
         prompt = f"""
 You are an expert resume reviewer.
@@ -42,12 +47,41 @@ Base the analysis only on the information provided.
 Do not invent qualifications or experience.
 """
 
-        response = client.interactions.create(
-            model="gemini-3.8-flash",
-            input=prompt
+        url = (
+            "https://generativelanguage.googleapis.com/"
+            "v1beta/models/gemini-3.8-flash:generateContent"
         )
 
-        return response.output_text.strip()
+        response = requests.post(
+            url,
+            headers={
+                "x-goog-api-key": api_key,
+                "Content-Type": "application/json"
+            },
+            json={
+                "contents": [
+                    {
+                        "parts": [
+                            {"text": prompt}
+                        ]
+                    }
+                ],
+                "generationConfig": {
+                    "candidateCount": 1,
+                    "maxOutputTokens": 800
+                }
+            },
+            timeout=45
+        )
+
+        response.raise_for_status()
+
+        data = response.json()
+
+        return (
+            data["candidates"][0]["content"]["parts"][0]["text"]
+            .strip()
+        )
 
     except Exception as e:
         return f"AI analysis could not be generated: {str(e)}"
